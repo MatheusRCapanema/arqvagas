@@ -1,0 +1,42 @@
+name: 🏛️ Busca Diária de Vagas de Arquitetura
+
+on:
+  schedule:
+    # Roda todos os dias às 08:00 horário de Brasília (11:00 UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+    # Permite disparar manualmente pelo GitHub Actions
+
+jobs:
+  buscar-vagas:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Permissão para commitar o CSV atualizado
+
+    steps:
+      - name: 📥 Baixar o código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Instalar dependências
+        run: |
+          pip install python-jobspy pandas requests
+
+      - name: 🤖 Rodar o scraper
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scraper.py
+
+      - name: 💾 Salvar vagas atualizadas no repositório
+        run: |
+          git config user.name "ArqVagas Bot 🤖"
+          git config user.email "bot@arqvagas.com"
+          git add vagas_aprovadas_ia.csv
+          git diff --staged --quiet || git commit -m "🏛️ Vagas atualizadas em $(TZ='America/Sao_Paulo' date '+%d/%m/%Y às %H:%M')"
+          git push
