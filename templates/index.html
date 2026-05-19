@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArqVagas — Buscador de Vagas de Arquitetura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #181c27;
+      --card: #1e2333;
+      --card-hover: #252b3d;
+      --border: #2d3452;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --glassdoor: #0ebd8f;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #1a1f35 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      gap: 1.5rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .logo span { color: var(--accent2); }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    /* Run button */
+    #btn-rodar {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none; border-radius: 10px;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.875rem; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    #btn-rodar:hover { opacity: 0.88; transform: translateY(-1px); }
+    #btn-rodar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    #btn-rodar .spin { animation: spin 1s linear infinite; display: none; }
+    #btn-rodar.rodando .spin { display: inline; }
+    #btn-rodar.rodando .idle { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Main */
+    main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0.3rem;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .stat-value.purple { color: var(--accent2); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue { color: var(--blue); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    /* Filters */
+    .filters {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    .filter-label { font-size: 0.8rem; color: var(--text2); font-weight: 600; }
+    .filter-chip {
+      padding: 0.4rem 0.9rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      font-size: 0.8rem; font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--accent2); color: var(--accent2); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Search */
+    .search-bar {
+      flex: 1; min-width: 200px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+    .search-bar::placeholder { color: var(--text3); }
+
+    /* Job Grid */
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.2rem;
+    }
+
+    /* Job Card */
+    .job-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.85rem;
+      transition: all 0.2s;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .job-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      border-radius: 3px 0 0 3px;
+    }
+    .job-card:hover { background: var(--card-hover); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.15); }
+
+    .job-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .job-title { font-size: 1rem; font-weight: 700; line-height: 1.3; color: var(--text); }
+    .job-company { font-size: 0.82rem; color: var(--text2); margin-top: 0.2rem; font-weight: 500; }
+
+    .platform-badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .platform-linkedin { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .platform-indeed   { background: rgba(239,68,68,0.15); color: #f87171; }
+    .platform-glassdoor{ background: rgba(14,189,143,0.15); color: var(--glassdoor); }
+    .platform-outro    { background: rgba(148,163,184,0.1); color: var(--text3); }
+
+    .job-location {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.8rem; color: var(--text2);
+    }
+    .location-remote { color: var(--green); font-weight: 600; }
+
+    .skills-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .skill-chip {
+      padding: 0.25rem 0.6rem;
+      background: rgba(167,139,250,0.12);
+      border: 1px solid rgba(167,139,250,0.25);
+      border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600;
+      color: var(--accent2);
+    }
+    .no-skills { font-size: 0.75rem; color: var(--text3); font-style: italic; }
+
+    .job-motivo {
+      font-size: 0.78rem; color: var(--text2);
+      line-height: 1.5;
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
+    }
+
+    .job-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: auto;
+    }
+    .job-date { font-size: 0.72rem; color: var(--text3); }
+    .btn-candidatar {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none; border-radius: 8px;
+      padding: 0.45rem 1rem;
+      font-size: 0.78rem; font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-candidatar:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 5rem 2rem;
+      color: var(--text3);
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { font-size: 1rem; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.5rem;
+      max-width: 320px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      transform: translateY(120%);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999;
+      font-size: 0.875rem;
+    }
+    #toast.show { transform: translateY(0); }
+    #toast .toast-title { font-weight: 700; margin-bottom: 0.25rem; }
+
+    /* Loading shimmer */
+    .shimmer-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.85rem;
+    }
+    .shimmer {
+      background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      main { padding: 1rem; }
+      .header-inner { gap: 0.75rem; }
+      .logo { font-size: 1.1rem; }
+      .jobs-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🏛️</div>
+      Arq<span>Vagas</span>
+    </a>
+    <input id="search" class="search-bar" type="text" placeholder="Buscar por título, empresa ou skill..." />
+    <button id="btn-rodar" onclick="rodarScraper()">
+      <span class="idle">⚡ Buscar Novas</span>
+      <span class="spin">⟳</span>
+      <span class="rodando-txt" style="display:none">Buscando...</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="stats-row" id="stats-row">
+    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
+    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
+    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
+    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <span class="filter-label">Filtrar:</span>
+    <button class="filter-chip active" data-filter="plataforma" data-value="todos" onclick="setFilter(this,'plataforma','todos')">Todas</button>
+    <button class="filter-chip" data-filter="plataforma" data-value="LinkedIn" onclick="setFilter(this,'plataforma','LinkedIn')">LinkedIn</button>
+    <button class="filter-chip" data-filter="plataforma" data-value="Indeed" onclick="setFilter(this,'plataforma','Indeed')">Indeed</button>
+    <button class="filter-chip" data-filter="plataforma" data-value="Glassdoor" onclick="setFilter(this,'plataforma','Glassdoor')">Glassdoor</button>
+    <span style="width:1px;background:var(--border);height:20px;margin:0 0.25rem"></span>
+    <button class="filter-chip active" data-filter="skills" data-value="todos" onclick="setFilter(this,'skills','todos')">Todas</button>
+    <button class="filter-chip" data-filter="skills" data-value="com_skills" onclick="setFilter(this,'skills','com_skills')">✨ Com Skills</button>
+    <button class="filter-chip" data-filter="skills" data-value="remota" onclick="setFilter(this,'skills','remota')">🌐 Remotas</button>
+  </div>
+
+  <div class="jobs-grid" id="jobs-grid">
+    <!-- Shimmer loading -->
+    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
+    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
+    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
+  </div>
+</main>
+
+<div id="toast">
+  <div class="toast-title" id="toast-title"></div>
+  <div id="toast-msg"></div>
+</div>
+
+<script>
+let todasVagas = [];
+let filtros = { plataforma: 'todos', skills: 'todos' };
+let statusInterval = null;
+
+async function carregarVagas() {
+  const resp = await fetch('/api/vagas');
+  todasVagas = await resp.json();
+  renderizarVagas();
+}
+
+async function carregarStats() {
+  const resp = await fetch('/api/stats');
+  const s = await resp.json();
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total de Vagas</div><div class="stat-value purple">${s.total}</div></div>
+    <div class="stat-card"><div class="stat-label">Com Skills</div><div class="stat-value green">${s.com_skills}</div></div>
+    <div class="stat-card"><div class="stat-label">Remotas</div><div class="stat-value blue">${s.remotas}</div></div>
+    <div class="stat-card"><div class="stat-label">LinkedIn</div><div class="stat-value yellow">${s.plataformas['LinkedIn'] || 0}</div></div>
+  `;
+}
+
+function renderizarVagas() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const grid = document.getElementById('jobs-grid');
+  
+  const filtered = todasVagas.filter(v => {
+    if (filtros.plataforma !== 'todos' && v['Plataforma'] !== filtros.plataforma) return false;
+    if (filtros.skills === 'com_skills' && !v['Skills (IA)']) return false;
+    if (filtros.skills === 'remota') {
+      const loc = (v['Local'] || '').toLowerCase();
+      if (!loc.includes('remot') && !loc.includes('home office') && !loc.includes('trabalho remoto')) return false;
+    }
+    if (search) {
+      const haystack = `${v['Título']} ${v['Empresa']} ${v['Skills (IA)']} ${v['Local']}`.toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>Nenhuma vaga encontrada com esses filtros.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(v => {
+    const plat = v['Plataforma'] || 'Outro';
+    const platClass = plat === 'LinkedIn' ? 'platform-linkedin' : plat === 'Indeed' ? 'platform-indeed' : plat === 'Glassdoor' ? 'platform-glassdoor' : 'platform-outro';
+    const local = v['Local'] || '';
+    const isRemote = /remot|home office|trabalho remoto/i.test(local);
+    const localHtml = isRemote
+      ? `<span class="location-remote">🌐 Remota</span>`
+      : `<span>📍 ${local || 'Não informado'}</span>`;
+
+    const skillsHtml = v['Skills (IA)']
+      ? v['Skills (IA)'].split(',').map(s => `<span class="skill-chip">${s.trim()}</span>`).join('')
+      : `<span class="no-skills">Skills não detectadas na descrição</span>`;
+
+    const motivo = v['Motivo (IA)'] ? `<div class="job-motivo">💡 ${v['Motivo (IA)']}</div>` : '';
+
+    return `
+      <div class="job-card">
+        <div class="job-header">
+          <div>
+            <div class="job-title">${v['Título'] || 'Título não informado'}</div>
+            <div class="job-company">${v['Empresa'] || 'Empresa não informada'}</div>
+          </div>
+          <span class="platform-badge ${platClass}">${plat}</span>
+        </div>
+        <div class="job-location">${localHtml}</div>
+        <div class="skills-row">${skillsHtml}</div>
+        ${motivo}
+        <div class="job-footer">
+          <span class="job-date">📅 ${v['Data'] || 'Data não informada'}</span>
+          <a class="btn-candidatar" href="${v['Link']}" target="_blank" rel="noopener">
+            Candidatar-se →
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setFilter(el, tipo, valor) {
+  document.querySelectorAll(`[data-filter="${tipo}"]`).forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  filtros[tipo] = valor;
+  renderizarVagas();
+}
+
+document.getElementById('search').addEventListener('input', renderizarVagas);
+
+async function rodarScraper() {
+  const btn = document.getElementById('btn-rodar');
+  btn.disabled = true;
+  btn.classList.add('rodando');
+  btn.querySelector('.rodando-txt').style.display = 'inline';
+
+  const resp = await fetch('/api/rodar', { method: 'POST' });
+  const data = await resp.json();
+  showToast(data.status === 'ja_rodando' ? '⏳ Aguarde' : '🚀 Robô Iniciado!', data.mensagem);
+
+  // Polling para atualizar vagas quando o scraper terminar
+  statusInterval = setInterval(async () => {
+    const sr = await fetch('/api/status');
+    const sd = await sr.json();
+    if (!sd.rodando) {
+      clearInterval(statusInterval);
+      btn.disabled = false;
+      btn.classList.remove('rodando');
+      btn.querySelector('.rodando-txt').style.display = 'none';
+      await carregarVagas();
+      await carregarStats();
+      showToast('✅ Concluído!', 'As novas vagas foram adicionadas.');
+    }
+  }, 5000);
+}
+
+function showToast(titulo, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = titulo;
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+// Init
+carregarVagas();
+carregarStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Ambiente virtual Python
+.venv/
+venv/
+env/
+
+# Arquivos temporários
+vagas_brutas.csv
+glassdoor_debug.png
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Não subir chave de API (use variável de ambiente no Render)
+.env
+
+# Logs
+*.log
