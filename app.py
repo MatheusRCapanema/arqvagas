@@ -64,6 +64,19 @@ def api_stats():
         'plataformas': plataformas
     })
 
+@app.route('/api/historico')
+def api_historico():
+    vagas = ler_vagas()
+    contagem = {}
+    for v in vagas:
+        data = v.get('Data', 'Sem data')
+        contagem[data] = contagem.get(data, 0) + 1
+    # Ordena cronologicamente
+    resultado = []
+    for data, total in sorted(contagem.items(), key=lambda x: pd.to_datetime(x[0], format='%d/%m/%Y', errors='coerce') or pd.Timestamp.min):
+        resultado.append({'data': data, 'total': total})
+    return jsonify(resultado)
+
 _scraper_rodando = False
 
 @app.route('/api/rodar', methods=['POST'])

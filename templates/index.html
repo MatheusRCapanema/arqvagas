@@ -1,464 +1,379 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ArqVagas — Buscador de Vagas de Arquitetura</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0f1117;
-      --bg2: #181c27;
-      --card: #1e2333;
-      --card-hover: #252b3d;
-      --border: #2d3452;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
-      --green: #22c55e;
-      --yellow: #eab308;
-      --blue: #3b82f6;
-      --red: #ef4444;
-      --glassdoor: #0ebd8f;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ArqVagas — Buscador de Vagas de Arquitetura</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0f1117;--bg2:#181c27;--card:#1e2333;--card2:#252b3d;--border:#2d3452;--accent:#6c63ff;--accent2:#a78bfa;--green:#22c55e;--yellow:#eab308;--blue:#3b82f6;--red:#ef4444;--glass:#0ebd8f;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-    /* Header */
-    header {
-      background: linear-gradient(135deg, #1a1f35 0%, #0f1117 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-    }
-    .header-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 68px;
-      gap: 1.5rem;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 1.3rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--text);
-      text-decoration: none;
-    }
-    .logo span { color: var(--accent2); }
-    .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-    }
+/* HEADER */
+header{background:linear-gradient(135deg,#1a1f35,#0f1117);border-bottom:1px solid var(--border);padding:0 1.5rem;position:sticky;top:0;z-index:100}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:1rem;height:64px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:.5rem;font-size:1.2rem;font-weight:800;color:var(--text);text-decoration:none;white-space:nowrap}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.logo span{color:var(--accent2)}
+#search{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:.45rem .9rem;color:var(--text);font-size:.85rem;outline:none;transition:border-color .2s}
+#search:focus{border-color:var(--accent)}
+#search::placeholder{color:var(--text3)}
+.header-btns{display:flex;gap:.5rem;flex-shrink:0}
+.btn-hdr{display:flex;align-items:center;gap:.35rem;border:none;border-radius:9px;padding:.5rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-run{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-run:hover{opacity:.85;transform:translateY(-1px)}
+.btn-run:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-xl{background:var(--card);color:var(--green);border:1px solid var(--border)}
+.btn-xl:hover{border-color:var(--green)}
 
-    /* Run button */
-    #btn-rodar {
-      display: flex; align-items: center; gap: 0.5rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      border: none; border-radius: 10px;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.875rem; font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    #btn-rodar:hover { opacity: 0.88; transform: translateY(-1px); }
-    #btn-rodar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    #btn-rodar .spin { animation: spin 1s linear infinite; display: none; }
-    #btn-rodar.rodando .spin { display: inline; }
-    #btn-rodar.rodando .idle { display: none; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+/* TABS */
+.tabs{max-width:1400px;margin:1.5rem auto 0;padding:0 1.5rem;display:flex;gap:.25rem;border-bottom:1px solid var(--border)}
+.tab{padding:.6rem 1.2rem;border:none;background:none;color:var(--text2);font-size:.875rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.tab-content{display:none;max-width:1400px;margin:0 auto;padding:1.5rem}
+.tab-content.active{display:block}
 
-    /* Main */
-    main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.5rem}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem}
+.stat-label{font-size:.7rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{font-size:1.8rem;font-weight:800;line-height:1.1;margin-top:.2rem}
+.c-purple{color:var(--accent2)}.c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-yellow{color:var(--yellow)}
 
-    /* Stats */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .stat-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.2rem 1.5rem;
-      display: flex; flex-direction: column; gap: 0.3rem;
-    }
-    .stat-label { font-size: 0.75rem; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
-    .stat-value.purple { color: var(--accent2); }
-    .stat-value.green { color: var(--green); }
-    .stat-value.blue { color: var(--blue); }
-    .stat-value.yellow { color: var(--yellow); }
+/* FILTERS */
+.filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem;align-items:center}
+.filter-label{font-size:.75rem;color:var(--text2);font-weight:600}
+.chip{padding:.35rem .8rem;border-radius:99px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--accent2);color:var(--accent2)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.divider{width:1px;height:18px;background:var(--border)}
+.hide-seen-wrap{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text2);cursor:pointer;user-select:none}
+.hide-seen-wrap input{cursor:pointer;accent-color:var(--accent)}
 
-    /* Filters */
-    .filters {
-      display: flex; flex-wrap: wrap; gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      align-items: center;
-    }
-    .filter-label { font-size: 0.8rem; color: var(--text2); font-weight: 600; }
-    .filter-chip {
-      padding: 0.4rem 0.9rem;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text2);
-      font-size: 0.8rem; font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .filter-chip:hover { border-color: var(--accent2); color: var(--accent2); }
-    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.empty{grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--text3)}
+.empty .ei{font-size:2.5rem;margin-bottom:.75rem}
 
-    /* Search */
-    .search-bar {
-      flex: 1; min-width: 200px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.5rem 1rem;
-      color: var(--text);
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .search-bar:focus { border-color: var(--accent); }
-    .search-bar::placeholder { color: var(--text3); }
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;display:flex;flex-direction:column;gap:.7rem;transition:all .2s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.card:hover{background:var(--card2);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,99,255,.15)}
+.card.seen{opacity:.45}
+.card.rejected{display:none}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
+.card-title-wrap{}
+.card-title{font-size:.95rem;font-weight:700;line-height:1.3}
+.card-company{font-size:.78rem;color:var(--text2);margin-top:.15rem}
+.badges{display:flex;gap:.3rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.badge{padding:.2rem .55rem;border-radius:5px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.b-li{background:rgba(59,130,246,.15);color:#60a5fa}
+.b-in{background:rgba(239,68,68,.15);color:#f87171}
+.b-gl{background:rgba(14,189,143,.15);color:var(--glass)}
+.b-ot{background:rgba(148,163,184,.1);color:var(--text3)}
+.b-new{background:rgba(34,197,94,.18);color:var(--green);animation:pulse 1.5s infinite}
+.b-done{background:rgba(234,179,8,.15);color:var(--yellow)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.card-loc{font-size:.77rem;color:var(--text2);display:flex;align-items:center;gap:.3rem}
+.loc-remote{color:var(--green);font-weight:600}
+.skills{display:flex;flex-wrap:wrap;gap:.3rem}
+.skill{padding:.2rem .55rem;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);border-radius:5px;font-size:.68rem;font-weight:600;color:var(--accent2)}
+.no-skill{font-size:.72rem;color:var(--text3);font-style:italic}
+.motivo{font-size:.75rem;color:var(--text2);line-height:1.5;border-top:1px solid var(--border);padding-top:.6rem}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-top:auto;flex-wrap:wrap}
+.card-date{font-size:.68rem;color:var(--text3)}
+.card-actions{display:flex;gap:.4rem;align-items:center}
+.btn-apply{display:inline-flex;align-items:center;gap:.3rem;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:7px;padding:.4rem .85rem;font-size:.75rem;font-weight:700;text-decoration:none;transition:all .2s;white-space:nowrap}
+.btn-apply:hover{opacity:.85}
+.btn-icon{border:1px solid var(--border);background:var(--bg);border-radius:7px;padding:.35rem .6rem;font-size:.8rem;cursor:pointer;transition:all .2s;color:var(--text2)}
+.btn-icon:hover{border-color:var(--accent2);background:var(--card2)}
+.btn-icon.active-done{border-color:var(--yellow);background:rgba(234,179,8,.1);color:var(--yellow)}
+.btn-icon.active-no{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
 
-    /* Job Grid */
-    .jobs-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.2rem;
-    }
+/* HISTORICO */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+.chart-title{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.chart-canvas{width:100%!important;max-height:300px}
+.hist-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem}
 
-    /* Job Card */
-    .job-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      display: flex; flex-direction: column; gap: 0.85rem;
-      transition: all 0.2s;
-      cursor: default;
-      position: relative;
-      overflow: hidden;
-    }
-    .job-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0;
-      width: 3px; height: 100%;
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      border-radius: 3px 0 0 3px;
-    }
-    .job-card:hover { background: var(--card-hover); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.15); }
+/* TOAST */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:.9rem 1.3rem;max-width:300px;box-shadow:0 10px 40px rgba(0,0,0,.4);transform:translateY(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;font-size:.82rem}
+#toast.show{transform:translateY(0)}
+#toast-title{font-weight:700;margin-bottom:.2rem}
 
-    .job-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-    .job-title { font-size: 1rem; font-weight: 700; line-height: 1.3; color: var(--text); }
-    .job-company { font-size: 0.82rem; color: var(--text2); margin-top: 0.2rem; font-weight: 500; }
-
-    .platform-badge {
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.05em;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    .platform-linkedin { background: rgba(59,130,246,0.15); color: #60a5fa; }
-    .platform-indeed   { background: rgba(239,68,68,0.15); color: #f87171; }
-    .platform-glassdoor{ background: rgba(14,189,143,0.15); color: var(--glassdoor); }
-    .platform-outro    { background: rgba(148,163,184,0.1); color: var(--text3); }
-
-    .job-location {
-      display: flex; align-items: center; gap: 0.4rem;
-      font-size: 0.8rem; color: var(--text2);
-    }
-    .location-remote { color: var(--green); font-weight: 600; }
-
-    .skills-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .skill-chip {
-      padding: 0.25rem 0.6rem;
-      background: rgba(167,139,250,0.12);
-      border: 1px solid rgba(167,139,250,0.25);
-      border-radius: 6px;
-      font-size: 0.72rem; font-weight: 600;
-      color: var(--accent2);
-    }
-    .no-skills { font-size: 0.75rem; color: var(--text3); font-style: italic; }
-
-    .job-motivo {
-      font-size: 0.78rem; color: var(--text2);
-      line-height: 1.5;
-      border-top: 1px solid var(--border);
-      padding-top: 0.75rem;
-    }
-
-    .job-footer {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: auto;
-    }
-    .job-date { font-size: 0.72rem; color: var(--text3); }
-    .btn-candidatar {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff; border: none; border-radius: 8px;
-      padding: 0.45rem 1rem;
-      font-size: 0.78rem; font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .btn-candidatar:hover { opacity: 0.85; transform: translateY(-1px); }
-
-    /* Empty state */
-    .empty-state {
-      grid-column: 1/-1;
-      text-align: center;
-      padding: 5rem 2rem;
-      color: var(--text3);
-    }
-    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
-    .empty-state p { font-size: 1rem; }
-
-    /* Toast */
-    #toast {
-      position: fixed; bottom: 2rem; right: 2rem;
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 1rem 1.5rem;
-      max-width: 320px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      transform: translateY(120%);
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      z-index: 999;
-      font-size: 0.875rem;
-    }
-    #toast.show { transform: translateY(0); }
-    #toast .toast-title { font-weight: 700; margin-bottom: 0.25rem; }
-
-    /* Loading shimmer */
-    .shimmer-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 1.5rem;
-      display: flex; flex-direction: column; gap: 0.85rem;
-    }
-    .shimmer {
-      background: linear-gradient(90deg, var(--border) 25%, var(--card-hover) 50%, var(--border) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 6px;
-    }
-    @keyframes shimmer { to { background-position: -200% 0; } }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      main { padding: 1rem; }
-      .header-inner { gap: 0.75rem; }
-      .logo { font-size: 1.1rem; }
-      .jobs-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+/* RESPONSIVE */
+@media(max-width:640px){
+  .header-inner{height:auto;padding:.75rem 0;gap:.5rem}
+  .logo{font-size:1rem}
+  .header-btns{width:100%;justify-content:flex-end}
+  .tab-content{padding:1rem}
+  .grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
 </head>
 <body>
-
 <header>
   <div class="header-inner">
-    <a class="logo" href="#">
-      <div class="logo-icon">🏛️</div>
-      Arq<span>Vagas</span>
-    </a>
-    <input id="search" class="search-bar" type="text" placeholder="Buscar por título, empresa ou skill..." />
-    <button id="btn-rodar" onclick="rodarScraper()">
-      <span class="idle">⚡ Buscar Novas</span>
-      <span class="spin">⟳</span>
-      <span class="rodando-txt" style="display:none">Buscando...</span>
-    </button>
+    <a class="logo" href="#"><div class="logo-icon">🏛️</div>Arq<span>Vagas</span></a>
+    <input id="search" type="text" placeholder="Buscar por título, empresa ou skill…"/>
+    <div class="header-btns">
+      <button class="btn-hdr btn-xl" onclick="exportarExcel()" title="Exportar Excel">📥 Excel</button>
+      <button id="btn-run" class="btn-hdr btn-run" onclick="rodarScraper()">⚡ Buscar Novas</button>
+    </div>
   </div>
 </header>
 
-<main>
-  <div class="stats-row" id="stats-row">
-    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
-    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
-    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
-    <div class="shimmer-card"><div class="shimmer" style="height:20px;width:60%"></div><div class="shimmer" style="height:40px;width:40%"></div></div>
-  </div>
-
-  <div class="filters" id="filters">
-    <span class="filter-label">Filtrar:</span>
-    <button class="filter-chip active" data-filter="plataforma" data-value="todos" onclick="setFilter(this,'plataforma','todos')">Todas</button>
-    <button class="filter-chip" data-filter="plataforma" data-value="LinkedIn" onclick="setFilter(this,'plataforma','LinkedIn')">LinkedIn</button>
-    <button class="filter-chip" data-filter="plataforma" data-value="Indeed" onclick="setFilter(this,'plataforma','Indeed')">Indeed</button>
-    <button class="filter-chip" data-filter="plataforma" data-value="Glassdoor" onclick="setFilter(this,'plataforma','Glassdoor')">Glassdoor</button>
-    <span style="width:1px;background:var(--border);height:20px;margin:0 0.25rem"></span>
-    <button class="filter-chip active" data-filter="skills" data-value="todos" onclick="setFilter(this,'skills','todos')">Todas</button>
-    <button class="filter-chip" data-filter="skills" data-value="com_skills" onclick="setFilter(this,'skills','com_skills')">✨ Com Skills</button>
-    <button class="filter-chip" data-filter="skills" data-value="remota" onclick="setFilter(this,'skills','remota')">🌐 Remotas</button>
-  </div>
-
-  <div class="jobs-grid" id="jobs-grid">
-    <!-- Shimmer loading -->
-    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
-    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
-    <div class="shimmer-card" style="height:220px"><div class="shimmer" style="height:20px;width:70%;margin-bottom:8px"></div><div class="shimmer" style="height:15px;width:45%"></div></div>
-  </div>
-</main>
-
-<div id="toast">
-  <div class="toast-title" id="toast-title"></div>
-  <div id="toast-msg"></div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('vagas',this)">🏛️ Vagas</button>
+  <button class="tab" onclick="switchTab('historico',this)">📊 Histórico</button>
 </div>
 
-<script>
-let todasVagas = [];
-let filtros = { plataforma: 'todos', skills: 'todos' };
-let statusInterval = null;
+<!-- ABA VAGAS -->
+<div id="tab-vagas" class="tab-content active">
+  <div class="stats-row" id="stats-row">
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-value c-purple" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-label">Com Skills</div><div class="stat-value c-green" id="s-skills">—</div></div>
+    <div class="stat"><div class="stat-label">Remotas</div><div class="stat-value c-blue" id="s-remote">—</div></div>
+    <div class="stat"><div class="stat-label">Hoje</div><div class="stat-value c-yellow" id="s-hoje">—</div></div>
+  </div>
 
-async function carregarVagas() {
-  const resp = await fetch('/api/vagas');
-  todasVagas = await resp.json();
-  renderizarVagas();
+  <div class="filters">
+    <span class="filter-label">Plataforma:</span>
+    <button class="chip active" data-f="plat" data-v="todos" onclick="setFilter(this,'plat','todos')">Todas</button>
+    <button class="chip" data-f="plat" data-v="LinkedIn" onclick="setFilter(this,'plat','LinkedIn')">LinkedIn</button>
+    <button class="chip" data-f="plat" data-v="Indeed" onclick="setFilter(this,'plat','Indeed')">Indeed</button>
+    <button class="chip" data-f="plat" data-v="Glassdoor" onclick="setFilter(this,'plat','Glassdoor')">Glassdoor</button>
+    <div class="divider"></div>
+    <button class="chip active" data-f="tipo" data-v="todos" onclick="setFilter(this,'tipo','todos')">Todas</button>
+    <button class="chip" data-f="tipo" data-v="skills" onclick="setFilter(this,'tipo','skills')">✨ Com Skills</button>
+    <button class="chip" data-f="tipo" data-v="remota" onclick="setFilter(this,'tipo','remota')">🌐 Remotas</button>
+    <button class="chip" data-f="tipo" data-v="hoje" onclick="setFilter(this,'tipo','hoje')">🆕 Hoje</button>
+    <div class="divider"></div>
+    <label class="hide-seen-wrap"><input type="checkbox" id="hide-seen" onchange="renderVagas()"/> Ocultar candidatadas</label>
+  </div>
+
+  <div class="grid" id="grid"><div class="empty"><div class="ei">⏳</div><p>Carregando vagas…</p></div></div>
+</div>
+
+<!-- ABA HISTORICO -->
+<div id="tab-historico" class="tab-content">
+  <div class="chart-wrap">
+    <div class="chart-title">📈 Vagas encontradas por dia</div>
+    <canvas id="chart-hist" class="chart-canvas"></canvas>
+  </div>
+  <div class="hist-stats" id="hist-stats"></div>
+</div>
+
+<div id="toast"><div id="toast-title"></div><div id="toast-msg"></div></div>
+
+<script>
+let allVagas=[], filtros={plat:'todos',tipo:'todos'}, chartInst=null;
+const HOJE=new Date().toLocaleDateString('pt-BR');
+
+// LocalStorage helpers
+const LS={
+  get(k){try{return JSON.parse(localStorage.getItem('arqvagas_'+k)||'{}')}catch{return{}}},
+  set(k,v){localStorage.setItem('arqvagas_'+k,JSON.stringify(v))}
+};
+let done=LS.get('done'), rejected=LS.get('rejected');
+
+function isHoje(data){
+  if(!data)return false;
+  return data.trim()===HOJE.trim();
 }
 
-async function carregarStats() {
-  const resp = await fetch('/api/stats');
-  const s = await resp.json();
-  document.getElementById('stats-row').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total de Vagas</div><div class="stat-value purple">${s.total}</div></div>
-    <div class="stat-card"><div class="stat-label">Com Skills</div><div class="stat-value green">${s.com_skills}</div></div>
-    <div class="stat-card"><div class="stat-label">Remotas</div><div class="stat-value blue">${s.remotas}</div></div>
-    <div class="stat-card"><div class="stat-label">LinkedIn</div><div class="stat-value yellow">${s.plataformas['LinkedIn'] || 0}</div></div>
+// TAB
+function switchTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='historico') loadHistorico();
+}
+
+// DATA
+async function loadVagas(){
+  const r=await fetch('/api/vagas');
+  allVagas=await r.json();
+  renderVagas();
+  loadStats();
+}
+async function loadStats(){
+  const r=await fetch('/api/stats');
+  const s=await r.json();
+  document.getElementById('s-total').textContent=s.total;
+  document.getElementById('s-skills').textContent=s.com_skills;
+  document.getElementById('s-remote').textContent=s.remotas;
+  document.getElementById('s-hoje').textContent=allVagas.filter(v=>isHoje(v['Data'])).length;
+}
+async function loadHistorico(){
+  const r=await fetch('/api/historico');
+  const hist=await r.json();
+  const labels=hist.map(h=>h.data);
+  const data=hist.map(h=>h.total);
+  if(chartInst)chartInst.destroy();
+  const ctx=document.getElementById('chart-hist').getContext('2d');
+  chartInst=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{label:'Vagas encontradas',data,
+        backgroundColor:'rgba(108,99,255,.6)',
+        borderColor:'rgba(167,139,250,1)',
+        borderWidth:2,borderRadius:6}]
+    },
+    options:{
+      responsive:true,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.parsed.y} vagas`}}},
+      scales:{
+        x:{grid:{color:'rgba(45,52,82,.5)'},ticks:{color:'#94a3b8',font:{size:11}}},
+        y:{grid:{color:'rgba(45,52,82,.5)'},ticks:{color:'#94a3b8',stepSize:1}}
+      }
+    }
+  });
+  // Resumo histórico
+  const total=data.reduce((a,b)=>a+b,0);
+  const media=data.length?Math.round(total/data.length):0;
+  const max=Math.max(...data,0);
+  document.getElementById('hist-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">Total acumulado</div><div class="stat-value c-purple">${total}</div></div>
+    <div class="stat"><div class="stat-label">Média/dia</div><div class="stat-value c-blue">${media}</div></div>
+    <div class="stat"><div class="stat-label">Melhor dia</div><div class="stat-value c-green">${max}</div></div>
+    <div class="stat"><div class="stat-label">Dias com busca</div><div class="stat-value c-yellow">${data.length}</div></div>
   `;
 }
 
-function renderizarVagas() {
-  const search = document.getElementById('search').value.toLowerCase();
-  const grid = document.getElementById('jobs-grid');
-  
-  const filtered = todasVagas.filter(v => {
-    if (filtros.plataforma !== 'todos' && v['Plataforma'] !== filtros.plataforma) return false;
-    if (filtros.skills === 'com_skills' && !v['Skills (IA)']) return false;
-    if (filtros.skills === 'remota') {
-      const loc = (v['Local'] || '').toLowerCase();
-      if (!loc.includes('remot') && !loc.includes('home office') && !loc.includes('trabalho remoto')) return false;
-    }
-    if (search) {
-      const haystack = `${v['Título']} ${v['Empresa']} ${v['Skills (IA)']} ${v['Local']}`.toLowerCase();
-      if (!haystack.includes(search)) return false;
-    }
+// RENDER
+function renderVagas(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const hideSeen=document.getElementById('hide-seen').checked;
+  const grid=document.getElementById('grid');
+  const filtered=allVagas.filter(v=>{
+    if(rejected[v['Link']])return false;
+    if(hideSeen&&done[v['Link']])return false;
+    if(filtros.plat!=='todos'&&v['Plataforma']!==filtros.plat)return false;
+    if(filtros.tipo==='skills'&&!v['Skills (IA)'])return false;
+    if(filtros.tipo==='remota'){const l=(v['Local']||'').toLowerCase();if(!/remot|home office/.test(l))return false;}
+    if(filtros.tipo==='hoje'&&!isHoje(v['Data']))return false;
+    if(q){const h=`${v['Título']} ${v['Empresa']} ${v['Skills (IA)']} ${v['Local']}`.toLowerCase();if(!h.includes(q))return false;}
     return true;
   });
+  if(!filtered.length){grid.innerHTML=`<div class="empty"><div class="ei">🔍</div><p>Nenhuma vaga com esses filtros.</p></div>`;return;}
+  grid.innerHTML=filtered.map(v=>cardHTML(v)).join('');
+}
 
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>Nenhuma vaga encontrada com esses filtros.</p></div>`;
-    return;
-  }
-
-  grid.innerHTML = filtered.map(v => {
-    const plat = v['Plataforma'] || 'Outro';
-    const platClass = plat === 'LinkedIn' ? 'platform-linkedin' : plat === 'Indeed' ? 'platform-indeed' : plat === 'Glassdoor' ? 'platform-glassdoor' : 'platform-outro';
-    const local = v['Local'] || '';
-    const isRemote = /remot|home office|trabalho remoto/i.test(local);
-    const localHtml = isRemote
-      ? `<span class="location-remote">🌐 Remota</span>`
-      : `<span>📍 ${local || 'Não informado'}</span>`;
-
-    const skillsHtml = v['Skills (IA)']
-      ? v['Skills (IA)'].split(',').map(s => `<span class="skill-chip">${s.trim()}</span>`).join('')
-      : `<span class="no-skills">Skills não detectadas na descrição</span>`;
-
-    const motivo = v['Motivo (IA)'] ? `<div class="job-motivo">💡 ${v['Motivo (IA)']}</div>` : '';
-
-    return `
-      <div class="job-card">
-        <div class="job-header">
-          <div>
-            <div class="job-title">${v['Título'] || 'Título não informado'}</div>
-            <div class="job-company">${v['Empresa'] || 'Empresa não informada'}</div>
-          </div>
-          <span class="platform-badge ${platClass}">${plat}</span>
-        </div>
-        <div class="job-location">${localHtml}</div>
-        <div class="skills-row">${skillsHtml}</div>
-        ${motivo}
-        <div class="job-footer">
-          <span class="job-date">📅 ${v['Data'] || 'Data não informada'}</span>
-          <a class="btn-candidatar" href="${v['Link']}" target="_blank" rel="noopener">
-            Candidatar-se →
-          </a>
-        </div>
+function cardHTML(v){
+  const p=v['Plataforma']||'Outro';
+  const platC=p==='LinkedIn'?'b-li':p==='Indeed'?'b-in':p==='Glassdoor'?'b-gl':'b-ot';
+  const loc=v['Local']||'';
+  const isRemote=/remot|home office/i.test(loc);
+  const locHtml=isRemote?`<span class="loc-remote">🌐 Remota</span>`:`<span>📍 ${loc||'Não informado'}</span>`;
+  const skillsHtml=v['Skills (IA)']
+    ?v['Skills (IA)'].split(',').map(s=>`<span class="skill">${s.trim()}</span>`).join('')
+    :`<span class="no-skill">Skills não detectadas</span>`;
+  const link=v['Link']||'#';
+  const isDone=done[link];
+  const novo=isHoje(v['Data']);
+  const motiHtml=v['Motivo (IA)']?`<div class="motivo">💡 ${v['Motivo (IA)']}</div>`:'';
+  return `<div class="card${isDone?' seen':''}" id="card-${btoa(link).replace(/[^a-z0-9]/gi,'').slice(0,12)}">
+    <div class="card-head">
+      <div class="card-title-wrap">
+        <div class="card-title">${v['Título']||'Sem título'}</div>
+        <div class="card-company">${v['Empresa']||'Empresa não informada'}</div>
       </div>
-    `;
-  }).join('');
+      <div class="badges">
+        ${novo?'<span class="badge b-new">🆕 Hoje</span>':''}
+        ${isDone?'<span class="badge b-done">✅ Candidatada</span>':''}
+        <span class="badge ${platC}">${p}</span>
+      </div>
+    </div>
+    <div class="card-loc">${locHtml}</div>
+    <div class="skills">${skillsHtml}</div>
+    ${motiHtml}
+    <div class="card-foot">
+      <span class="card-date">📅 ${v['Data']||'—'}</span>
+      <div class="card-actions">
+        <button class="btn-icon${done[link]?' active-done':''}" title="Já me candidatei" onclick="markDone('${link}',this)">✅</button>
+        <button class="btn-icon" title="Não tenho interesse" onclick="markRejected('${link}')">❌</button>
+        <a class="btn-apply" href="${link}" target="_blank" rel="noopener">Candidatar →</a>
+      </div>
+    </div>
+  </div>`;
 }
 
-function setFilter(el, tipo, valor) {
-  document.querySelectorAll(`[data-filter="${tipo}"]`).forEach(b => b.classList.remove('active'));
+function markDone(link,btn){
+  if(done[link]){delete done[link];}
+  else{done[link]=true;}
+  LS.set('done',done);
+  renderVagas();
+}
+function markRejected(link){
+  rejected[link]=true;
+  LS.set('rejected',rejected);
+  renderVagas();
+  showToast('❌ Ocultada','Vaga removida. Recarregue a página para desfazer.');
+}
+
+function setFilter(el,tipo,val){
+  document.querySelectorAll(`[data-f="${tipo}"]`).forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  filtros[tipo] = valor;
-  renderizarVagas();
+  filtros[tipo]=val;
+  renderVagas();
+}
+document.getElementById('search').addEventListener('input',renderVagas);
+
+// EXCEL
+function exportarExcel(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const visible=allVagas.filter(v=>{
+    if(rejected[v['Link']])return false;
+    if(filtros.plat!=='todos'&&v['Plataforma']!==filtros.plat)return false;
+    if(filtros.tipo==='skills'&&!v['Skills (IA)'])return false;
+    if(filtros.tipo==='remota'){const l=(v['Local']||'').toLowerCase();if(!/remot|home office/.test(l))return false;}
+    if(filtros.tipo==='hoje'&&!isHoje(v['Data']))return false;
+    if(q){const h=`${v['Título']} ${v['Empresa']} ${v['Skills (IA)']} ${v['Local']}`.toLowerCase();if(!h.includes(q))return false;}
+    return true;
+  });
+  const ws=XLSX.utils.json_to_sheet(visible);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Vagas');
+  XLSX.writeFile(wb,`ArqVagas_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+  showToast('📥 Exportado!',`${visible.length} vagas salvas no Excel.`);
 }
 
-document.getElementById('search').addEventListener('input', renderizarVagas);
-
-async function rodarScraper() {
-  const btn = document.getElementById('btn-rodar');
-  btn.disabled = true;
-  btn.classList.add('rodando');
-  btn.querySelector('.rodando-txt').style.display = 'inline';
-
-  const resp = await fetch('/api/rodar', { method: 'POST' });
-  const data = await resp.json();
-  showToast(data.status === 'ja_rodando' ? '⏳ Aguarde' : '🚀 Robô Iniciado!', data.mensagem);
-
-  // Polling para atualizar vagas quando o scraper terminar
-  statusInterval = setInterval(async () => {
-    const sr = await fetch('/api/status');
-    const sd = await sr.json();
-    if (!sd.rodando) {
+// SCRAPER
+let statusInterval=null;
+async function rodarScraper(){
+  const btn=document.getElementById('btn-run');
+  btn.disabled=true;btn.textContent='⟳ Buscando…';
+  const r=await fetch('/api/rodar',{method:'POST'});
+  const d=await r.json();
+  showToast(d.status==='ja_rodando'?'⏳ Aguarde':'🚀 Iniciado!',d.mensagem);
+  statusInterval=setInterval(async()=>{
+    const sr=await fetch('/api/status');
+    const sd=await sr.json();
+    if(!sd.rodando){
       clearInterval(statusInterval);
-      btn.disabled = false;
-      btn.classList.remove('rodando');
-      btn.querySelector('.rodando-txt').style.display = 'none';
-      await carregarVagas();
-      await carregarStats();
-      showToast('✅ Concluído!', 'As novas vagas foram adicionadas.');
+      btn.disabled=false;btn.textContent='⚡ Buscar Novas';
+      await loadVagas();
+      showToast('✅ Concluído!','Vagas atualizadas!');
     }
-  }, 5000);
+  },5000);
 }
 
-function showToast(titulo, msg) {
-  const t = document.getElementById('toast');
-  document.getElementById('toast-title').textContent = titulo;
-  document.getElementById('toast-msg').textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 5000);
+function showToast(t,m){
+  document.getElementById('toast-title').textContent=t;
+  document.getElementById('toast-msg').textContent=m;
+  const el=document.getElementById('toast');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4500);
 }
 
-// Init
-carregarVagas();
-carregarStats();
+loadVagas();
 </script>
 </body>
 </html>

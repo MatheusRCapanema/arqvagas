@@ -24,7 +24,11 @@ CSV_PATH = "vagas_aprovadas_ia.csv"
 def search_architecture_jobs():
     print("Iniciando a busca por vagas de arquitetura...")
     
-    search_terms = ["Arquitetura", "Cadista", "Arquiteto Junior"]
+    search_terms = [
+        "Arquiteto", "Arquitetura", "Arquiteto Junior",
+        "Cadista", "Projetista", "BIM", "Revit",
+        "Coordenador de Projetos", "Gestor de Obras", "Compatibilizador"
+    ]
     locations = ["Distrito Federal, Brasil", "Remote, Brasil"]
     
     negative_skills = [
@@ -83,28 +87,33 @@ def search_architecture_jobs():
         descricao_limpa = str(descricao)[:2000]
         
         prompt = f"""
-Você é um especialista em recrutamento de Arquitetura de Edificações.
-Analise a vaga abaixo e retorne APENAS um JSON válido respondendo as perguntas.
-As habilidades buscadas são: Archicad, Sketchup layout, Sketchup, Autocad, Enscape, Canva, Pacote Office.
+Você é um recrutador sênior especializado em Arquitetura de Edificações e Construção Civil.
+Analise a vaga abaixo e retorne APENAS um JSON válido.
 
 Título da Vaga: {titulo}
 Local: {local}
 Descrição: {descricao_limpa}
 
-REGRA DE LOCALIZAÇÃO (muito importante):
-- local_correto = true SOMENTE se:
-  a) O local for Distrito Federal, Brasília, DF, Lago Sul, Lago Norte, Asa Sul, Asa Norte, Taguatinga, Gama, Sobradinho, OU
-  b) A vaga for explicitamente remota, home office, trabalho remoto, ou flexível, OU
-  c) O local for genérico como "Brasil" sem cidade específica, OU
-  d) Não houver informação de local alguma
-- local_correto = false se a vaga for em outra cidade/estado (São Paulo, Rio de Janeiro, Recife, Curitiba, etc.) e NÃO for remota.
+HABILIDADES DESEJADAS: Archicad, Sketchup, Autocad, Enscape, Revit, BIM, Pacote Office.
 
-Retorne um JSON com esta estrutura exata:
+REGRA 1 — e_arquitetura_edificacoes = true APENAS se:
+  - A vaga for para Arquiteto(a), Cadista, Desenhista, Projetista, Coordenador/Gestor de projetos de arquitetura ou obras civis
+  - OU for vaga técnica em Arquitetura, Engenharia Civil, Construção, Urbanismo, Interiores
+  - e_arquitetura_edificacoes = false se for vaga de: VENDAS, RH, Marketing, Financeiro, Administrativo, TI/Software, Médico, Jurídico — mesmo que mencionem "arquitetura" como diferencial ou formação desejável
+
+REGRA 2 — local_correto = true SOMENTE se:
+  a) Local é Distrito Federal, Brasília, DF ou cidades-satélite do DF, OU
+  b) Vaga for remota, home office, trabalho remoto ou flexível, OU
+  c) Local genérico como "Brasil" sem cidade específica, OU
+  d) Local não informado
+  - local_correto = false se for cidade específica de outro estado (SP, RJ, Recife, Curitiba, etc.) e NÃO for remota
+
+Retorne JSON exato:
 {{
   "e_arquitetura_edificacoes": true ou false,
   "local_correto": true ou false,
-  "skills_encontradas": ["lista", "de", "skills"],
-  "motivo": "Resumo de 1 linha justificando"
+  "skills_encontradas": ["lista"],
+  "motivo": "1 frase explicando"
 }}
         """
         
